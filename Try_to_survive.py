@@ -11,7 +11,7 @@ DISP = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.init()
 
 
-VEL = 3
+VEL = 11
 FPS = 60
 WHITE = (255,255,255)
 MC_WIDTH = WIDTH/6
@@ -23,8 +23,12 @@ BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
-MONSTER_VEL = 1
+MONSTER_VEL = 9
 MONSTER_MAX_RANGE = 100
+MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
+MONSTER_BORDER_DOWN_Y = (-HEIGHT/2+BACKGROUND_HEIGHT/2)+WIDTH-MONSTER_HEIGHT
+MONSTER_BORDER_LEFT_X = -(-WIDTH/2+BACKGROUND_WIDTH/2)
+MONSTER_BORDER_RIGHT_X = (-WIDTH/2+BACKGROUND_WIDTH/2)+WIDTH-MONSTER_WIDTH
 
 BACKGROUND_IMAGE = pygame.image.load('./Background.jpg')
 BACKGROUND = pygame.transform.scale(BACKGROUND_IMAGE,(BACKGROUND_WIDTH,BACKGROUND_HEIGHT))
@@ -55,33 +59,59 @@ def draw_characters(mc_rect):
     mc_center_rect = mc_rotate.get_rect(center = (mc_rect.x+MC_WIDTH/2,mc_rect.y+MC_HEIGHT/2))
     DISP.blit(mc_rotate,(mc_center_rect))
 
+
 def move_characters(background_rect,monster_rect):
     global monster_previous_position_x
     global monster_previous_position_y
+    global MONSTER_BORDER_UP_Y
+    global MONSTER_BORDER_DOWN_Y
+    global MONSTER_BORDER_LEFT_X
+    global MONSTER_BORDER_RIGHT_X
+
     # background movement
     keys = pygame.key.get_pressed()
+    
     if keys[pygame.K_LEFT]:
         background_rect.x=background_rect.x+VEL
+        if background_rect.x < 0+MC_WIDTH*2:
+            MONSTER_BORDER_LEFT_X += VEL
+            MONSTER_BORDER_RIGHT_X += VEL
+            
     if keys[pygame.K_RIGHT]:
         background_rect.x=background_rect.x-VEL
+        if background_rect.x > WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
+            MONSTER_BORDER_RIGHT_X -= VEL
+            MONSTER_BORDER_LEFT_X -= VEL
+
     if keys[pygame.K_UP]:
         background_rect.y=background_rect.y+VEL
+        if background_rect.y < 0+MC_HEIGHT:
+            MONSTER_BORDER_DOWN_Y += VEL
+            MONSTER_BORDER_UP_Y += VEL
+        # MONSTER_BORDER_UP_Y += VEL
     if keys[pygame.K_DOWN]:
         background_rect.y=background_rect.y-VEL
+        if background_rect.y > HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
+            MONSTER_BORDER_DOWN_Y -= VEL
+            MONSTER_BORDER_UP_Y -= VEL
     
     # monster movement
     if keys[pygame.K_LEFT]:
-        monster_rect.x=monster_rect.x+VEL
-        monster_previous_position_x = monster_previous_position_x + VEL
+        if background_rect.x < 0+MC_WIDTH*2:
+            monster_rect.x=monster_rect.x+VEL
+            monster_previous_position_x = monster_previous_position_x + VEL
     if keys[pygame.K_RIGHT]:
-        monster_rect.x=monster_rect.x-VEL
-        monster_previous_position_x = monster_previous_position_x - VEL
+        if background_rect.x > WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
+            monster_rect.x=monster_rect.x-VEL
+            monster_previous_position_x = monster_previous_position_x - VEL
     if keys[pygame.K_UP]:
-        monster_rect.y=monster_rect.y+VEL
-        monster_previous_position_y = monster_previous_position_y + VEL     
+        if background_rect.y < 0+MC_HEIGHT:
+            monster_rect.y=monster_rect.y+VEL
+            monster_previous_position_y = monster_previous_position_y + VEL     
     if keys[pygame.K_DOWN]:
-        monster_rect.y=monster_rect.y-VEL
-        monster_previous_position_y = monster_previous_position_y - VEL
+        if background_rect.y > HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
+            monster_rect.y=monster_rect.y-VEL
+            monster_previous_position_y = monster_previous_position_y - VEL
 
 
 
@@ -121,7 +151,8 @@ def draw_monster(monster_rect,mc_rect):
         pass
         # pass
     else:
-        roam(monster_rect)
+        monster_rect.y += MONSTER_VEL
+
     DISP.blit(MONSTER,(monster_rect.x,monster_rect.y))
 
 def roam(monster_rect):
@@ -176,6 +207,19 @@ def roam(monster_rect):
             monster_decision_x_neg_or_pos = random.choice([1,-1])
             monster_location_getting_time = 0
 
+def monsters_border(monster_rect,background_rect):
+    if MONSTER_BORDER_UP_Y>monster_rect.y:
+        monster_rect.y = MONSTER_BORDER_UP_Y
+    if MONSTER_BORDER_DOWN_Y<monster_rect.y:
+        monster_rect.y = MONSTER_BORDER_DOWN_Y
+
+    if MONSTER_BORDER_LEFT_X>monster_rect.x:
+        monster_rect.x = MONSTER_BORDER_LEFT_X
+    if MONSTER_BORDER_RIGHT_X<monster_rect.x:
+        monster_rect.x = MONSTER_BORDER_RIGHT_X
+    print(background_rect.y)
+    print(MONSTER_BORDER_UP_Y,MONSTER_BORDER_DOWN_Y)
+
 def main():
     mc_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MC_WIDTH,MC_HEIGHT)
     monster_rect = pygame.Rect(WIDTH/2,HEIGHT/2,MONSTER_WIDTH,MONSTER_HEIGHT)
@@ -192,9 +236,9 @@ def main():
         draw_window()
         game_border_and_draw_background(background_rect)
         move_characters(background_rect,monster_rect)
-        draw_darkness(mc_rect)
+        # draw_darkness(mc_rect)
         draw_monster(monster_rect,mc_rect)
-        # roam(monster_rect)
+        monsters_border(monster_rect,background_rect)
         draw_characters(mc_rect)
         pygame.display.update()
 
@@ -204,5 +248,5 @@ def main():
 
 main()
 
-if __name__ == '__python.py__':
-    main()
+# if __name__ == '__python.py__':
+#     main()
