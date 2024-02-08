@@ -23,7 +23,7 @@ BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
-MONSTER_VEL = 9
+MONSTER_VEL = 2
 MONSTER_MAX_RANGE = 100
 MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
 MONSTER_BORDER_DOWN_Y = (-HEIGHT/2+BACKGROUND_HEIGHT/2)+WIDTH-MONSTER_HEIGHT
@@ -151,9 +151,10 @@ def draw_monster(monster_rect,mc_rect):
         pass
         # pass
     else:
-        monster_rect.y += MONSTER_VEL
+        roam(monster_rect)
+    monster_rotation(monster_rect)
 
-    DISP.blit(MONSTER,(monster_rect.x,monster_rect.y))
+    # DISP.blit(MONSTER,(monster_rect.x,monster_rect.y))
 
 def roam(monster_rect):
     global monster_decision_x_neg_or_pos
@@ -217,8 +218,15 @@ def monsters_border(monster_rect,background_rect):
         monster_rect.x = MONSTER_BORDER_LEFT_X
     if MONSTER_BORDER_RIGHT_X<monster_rect.x:
         monster_rect.x = MONSTER_BORDER_RIGHT_X
-    print(background_rect.y)
-    print(MONSTER_BORDER_UP_Y,MONSTER_BORDER_DOWN_Y)
+
+def monster_rotation(monster_rect):
+    x_dist = -abs(monster_rect.x)+abs(monster_previous_position_x)
+    y_dist = -abs(monster_rect.y)+abs(monster_previous_position_y)
+    rotate = math.degrees(math.atan2(x_dist,y_dist))
+    monster_rotate = pygame.transform.rotate(MONSTER,rotate)
+    mc_center_rect = monster_rotate.get_rect(center = (monster_rect.x+MONSTER_WIDTH/2,monster_rect.y+MONSTER_HEIGHT/2))
+    DISP.blit(monster_rotate,mc_center_rect)
+
 
 def main():
     mc_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MC_WIDTH,MC_HEIGHT)
