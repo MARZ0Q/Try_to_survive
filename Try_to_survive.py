@@ -11,7 +11,7 @@ DISP = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.init()
 
 
-VEL = 12
+VEL = 7
 FPS = 60
 WHITE = (255,255,255)
 MC_WIDTH = WIDTH/6
@@ -45,7 +45,8 @@ monster_previous_position_y = 0
 monster_location_getting_time = 0
 monster_mc_collision = False
 detected = False
-range_adder = random.choice([66,100])
+range_adder_choice = [120,-50,0,100]
+range_adder = random.choice(range_adder_choice)
 
 MONSTER_IMAGE = pygame.image.load('./First.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
@@ -159,7 +160,6 @@ def draw_monster(monster_rect,mc_rect):
     if detected == False:
         roam(monster_rect)
         monster_rotation(monster_rect)
-        # pass
 
     # DISP.blit(MONSTER,(monster_rect.x,monster_rect.y))
 
@@ -186,7 +186,7 @@ def roam(monster_rect):
             monster_decision_x_neg_or_pos = random.choice([1,-1])
             monster_location_getting_time = 0
             monster_decision_y_neg_or_pos = random.choice([1,-1])
-            range_adder= random.choice([100,0])
+            range_adder= random.choice(range_adder_choice)
     
     if monster_decision_x_neg_or_pos <0:
         if abs(abs(monster_rect.x) -abs(monster_previous_position_x)-monster_decision_range) <= monster_decision_range+range_adder:
@@ -196,7 +196,7 @@ def roam(monster_rect):
             monster_decision_x_neg_or_pos = random.choice([1,-1])
             monster_decision_y_neg_or_pos = random.choice([1,-1])
             monster_location_getting_time = 0
-            range_adder= random.choice([100,0])
+            range_adder= random.choice(range_adder_choice)
 
         
    # For random y
@@ -208,7 +208,7 @@ def roam(monster_rect):
             monster_decision_y_neg_or_pos = random.choice([1,-1])
             monster_decision_x_neg_or_pos = random.choice([1,-1])
             monster_location_getting_time = 0
-            range_adder= random.choice([100,0])
+            range_adder= random.choice(range_adder_choice)
     
     if monster_decision_y_neg_or_pos <0:
         if abs(abs(monster_rect.y) -abs(monster_previous_position_y)-monster_decision_range) <= monster_decision_range+range_adder:
@@ -218,24 +218,24 @@ def roam(monster_rect):
             monster_decision_y_neg_or_pos = random.choice([1,-1])
             monster_decision_x_neg_or_pos = random.choice([1,-1])
             monster_location_getting_time = 0
-            range_adder= random.choice([100,0])
+            range_adder= random.choice(range_adder_choice)
 
 def monsters_border(monster_rect,background_rect):
     global monster_decision_range
 
     if MONSTER_BORDER_UP_Y>monster_rect.y:
         monster_rect.y = MONSTER_BORDER_UP_Y+MONSTER_HEIGHT
-        monster_decision_range = -100
+        monster_decision_range = 1
     if MONSTER_BORDER_DOWN_Y<monster_rect.y:
         monster_rect.y = MONSTER_BORDER_DOWN_Y-MONSTER_HEIGHT
-        monster_decision_range = -100
+        monster_decision_range = 1
 
     if MONSTER_BORDER_LEFT_X>monster_rect.x:
         monster_rect.x = MONSTER_BORDER_LEFT_X+MONSTER_WIDTH
-        monster_decision_range = -100
+        monster_decision_range = 1
     if MONSTER_BORDER_RIGHT_X<monster_rect.x:
         monster_rect.x = MONSTER_BORDER_RIGHT_X-MONSTER_WIDTH
-        monster_decision_range = -100
+        monster_decision_range = 1
 
 def monster_rotation(monster_rect):
     x_dist = -abs(monster_rect.x)+abs(monster_previous_position_x)
@@ -304,12 +304,13 @@ def main():
         draw_mask_and_detection(monster_rect,mc_rect)
         game_border_and_draw_background(background_rect)
         move_characters(background_rect,monster_rect)
-        # draw_darkness(mc_rect)
         if detected == True:
             chase(monster_rect,mc_rect)
+            pass
 
         monsters_border(monster_rect,background_rect)
         draw_monster(monster_rect,mc_rect)
+        draw_darkness(mc_rect)
         draw_characters(mc_rect)
         pygame.display.update()
 
