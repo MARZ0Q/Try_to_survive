@@ -11,7 +11,7 @@ DISP = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.init()
 
 
-VEL = 7
+VEL = 13
 FPS = 60
 WHITE = (255,255,255)
 MC_WIDTH = WIDTH/6
@@ -23,7 +23,7 @@ BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
-MONSTER_VEL = 9
+MONSTER_VEL = 4
 MONSTER_MAX_RANGE = 100
 MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
 MONSTER_BORDER_DOWN_Y = (-HEIGHT/2+BACKGROUND_HEIGHT/2)+WIDTH-MONSTER_HEIGHT
@@ -45,8 +45,12 @@ monster_previous_position_y = 0
 monster_location_getting_time = 0
 monster_mc_collision = False
 detected = False
-range_adder_choice = [120,-50,0,100]
+range_adder_choice = [100,-100,0]
 range_adder = random.choice(range_adder_choice)
+
+monster_decision_to_spawn = random.randint(1,1000)
+monster_initial_decision_to_spawn = random.choice(['t-r','b-l'])
+monster_in_game_decision_to_spawn = random.choice(['t-r','b-l'])
 
 MONSTER_IMAGE = pygame.image.load('./First.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
@@ -225,17 +229,17 @@ def monsters_border(monster_rect,background_rect):
 
     if MONSTER_BORDER_UP_Y>monster_rect.y:
         monster_rect.y = MONSTER_BORDER_UP_Y+MONSTER_HEIGHT
-        monster_decision_range = 1
+        monster_decision_range = -100
     if MONSTER_BORDER_DOWN_Y<monster_rect.y:
         monster_rect.y = MONSTER_BORDER_DOWN_Y-MONSTER_HEIGHT
-        monster_decision_range = 1
+        monster_decision_range = -11
 
     if MONSTER_BORDER_LEFT_X>monster_rect.x:
         monster_rect.x = MONSTER_BORDER_LEFT_X+MONSTER_WIDTH
-        monster_decision_range = 1
+        monster_decision_range = -100
     if MONSTER_BORDER_RIGHT_X<monster_rect.x:
         monster_rect.x = MONSTER_BORDER_RIGHT_X-MONSTER_WIDTH
-        monster_decision_range = 1
+        monster_decision_range = -11
 
 def monster_rotation(monster_rect):
     x_dist = -abs(monster_rect.x)+abs(monster_previous_position_x)
@@ -287,9 +291,31 @@ def chase(monster_rect,mc_rect):
 
     monster_rotation(monster_rect)
 
+def monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_right_spawn_rect):
+    global monster_decision_to_spawn
+    global monster_in_game_decision_to_spawn
+
+    monster_decision_to_spawn = monster_decision_to_spawn
+    monster_in_game_decision_to_spawn = monster_in_game_decision_to_spawn
+
+    if monster_decision_range == 1 and monster_in_game_decision_to_spawn == 't-r':
+        monster_rect.x = top_right_spawn_rect.x
+        monster_rect.y = top_right_spawn_rect.y
+    
+    if monster_decision_range == 1 and monster_in_game_decision_to_spawn == 'b-l':
+        monster_rect.x = bottom_left_spawn_rect.x
+        monster_rect.y = bottom_left_spawn_rect.y
+
+
 def main():
+    bottom_left_spawn_rect = pygame.Rect(MONSTER_BORDER_LEFT_X+MONSTER_WIDTH+200,MONSTER_BORDER_DOWN_Y-MONSTER_HEIGHT-200,100,100)
+    top_right_spawn_rect = pygame.Rect(MONSTER_BORDER_RIGHT_X-MONSTER_WIDTH-200,MONSTER_BORDER_UP_Y+MONSTER_HEIGHT+200,100,100)
+
     mc_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MC_WIDTH,MC_HEIGHT)
-    monster_rect = pygame.Rect(WIDTH/2,HEIGHT/2,MONSTER_WIDTH,MONSTER_HEIGHT)
+    if monster_initial_decision_to_spawn == 'b-l':
+        monster_rect = pygame.Rect(bottom_left_spawn_rect.x,bottom_left_spawn_rect.y,MONSTER_WIDTH,MONSTER_HEIGHT)
+    if monster_initial_decision_to_spawn == 't-r':
+        monster_rect = pygame.Rect(top_right_spawn_rect.x,top_right_spawn_rect.y,MONSTER_WIDTH,MONSTER_HEIGHT)
     background_rect = pygame.Rect(WIDTH/2-(BACKGROUND_WIDTH/2),HEIGHT/2-(BACKGROUND_HEIGHT/2),BACKGROUND_WIDTH,BACKGROUND_HEIGHT)
 
     clock = pygame.time.Clock()
@@ -310,8 +336,15 @@ def main():
 
         monsters_border(monster_rect,background_rect)
         draw_monster(monster_rect,mc_rect)
-        draw_darkness(mc_rect)
+        # draw_darkness(mc_rect)
         draw_characters(mc_rect)
+        monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_right_spawn_rect)
+
+
+        # spawn point
+        pygame.draw.rect(DISP,BLACK,bottom_left_spawn_rect)
+        pygame.draw.rect(DISP,BLACK,top_right_spawn_rect)
+
         pygame.display.update()
 
     pygame.quit()
