@@ -2,6 +2,7 @@
 import pygame
 import math 
 import random
+import threading
 
 HEIGHT = 700
 WIDTH = 700
@@ -23,20 +24,26 @@ BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
-MONSTER_VEL = 4
+MONSTER_VEL = 1
 MONSTER_MAX_RANGE = 100
 MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
 MONSTER_BORDER_DOWN_Y = (-HEIGHT/2+BACKGROUND_HEIGHT/2)+WIDTH-MONSTER_HEIGHT
 MONSTER_BORDER_LEFT_X = (WIDTH/2-BACKGROUND_WIDTH/2)+MONSTER_WIDTH
 MONSTER_BORDER_RIGHT_X = (-WIDTH/2+BACKGROUND_WIDTH/2)+WIDTH-MONSTER_WIDTH
-
+MONSTER_HELPER_WIDTH = WIDTH/6
+MONSTER_HELPER_HEIGHT = HEIGHT/6
+MONSTER_HELPER_IMAGE = pygame.image.load('./my_friend.webp')
+MONSTER_HELPER = pygame.transform.scale(MONSTER_HELPER_IMAGE,(MONSTER_HELPER_WIDTH,MONSTER_HEIGHT))
 BACKGROUND_IMAGE = pygame.image.load('./Background.jpg')
 BACKGROUND = pygame.transform.scale(BACKGROUND_IMAGE,(BACKGROUND_WIDTH,BACKGROUND_HEIGHT))
 MC_IMAGE = pygame.image.load('./First.png')
 MC = pygame.transform.scale(MC_IMAGE,(MC_WIDTH,MC_HEIGHT)).convert_alpha()
 DARKNESS_IMAGE = pygame.image.load('./Darkness.png').convert_alpha()
 DARKNESS = pygame.transform.scale(DARKNESS_IMAGE,(DARKNESS_WIDTH,DARKNESS_HEIGHT))
+MONSTER_HELPER_MAX_RANGE = 200
 
+should_helper_monster_decision_continue = True
+monster_helper_spawned = False
 monster_decision_x_neg_or_pos = random.choice([1,-1])
 monster_decision_y_neg_or_pos = random.choice([1,-1])
 monster_decision_range = random.randint(1,MONSTER_MAX_RANGE)
@@ -47,13 +54,16 @@ monster_mc_collision = False
 detected = False
 range_adder_choice = [100,-100,0]
 range_adder = random.choice(range_adder_choice)
-
-monster_decision_to_spawn = random.randint(1,1000)
+has_monster_helper_spawned = False
+monster_decision_to_spawn = random.randint(1,2)
 monster_initial_decision_to_spawn = random.choice(['t-r','b-l'])
 monster_in_game_decision_to_spawn = random.choice(['t-r','b-l'])
+monster_helper_draw_time = 0
 
 MONSTER_IMAGE = pygame.image.load('./First.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
+
+monster_helper_decision_to_spawn = random.randint(1,2)
 
 def draw_window():
     DISP.fill(WHITE)
@@ -277,6 +287,16 @@ def draw_mask_and_detection(monster_rect,mc_rect):
     if monster_mask.overlap(mc_mask,(mc_rect.x-monster_rect.x,mc_rect.y-monster_rect.y)):
         monster_mc_collision = True
 
+def monster_chase_rotation(monster_rect,mc_rect):
+    x_dist = abs(monster_rect.x)-abs(mc_rect.x)
+    y_dist = abs(monster_rect.y)-abs(mc_rect.y)
+    monster_rotation = math.degrees(math.atan2(x_dist,y_dist))
+    monster_rotate = pygame.transform.rotate(MONSTER,monster_rotation)
+    monster_center_rect = monster_rotate.get_rect(center = (monster_rect.x+MONSTER_WIDTH/2,monster_rect.y+MONSTER_HEIGHT/2))
+    DISP.blit(monster_rotate,monster_center_rect)
+
+
+
 def chase(monster_rect,mc_rect):
 
     if monster_rect.x< mc_rect.x:
@@ -289,7 +309,7 @@ def chase(monster_rect,mc_rect):
     elif monster_rect.y> mc_rect.y:
         monster_rect.y-= MONSTER_VEL
 
-    monster_rotation(monster_rect)
+    monster_chase_rotation(monster_rect,mc_rect)
 
 def monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_right_spawn_rect):
     global monster_decision_to_spawn
@@ -307,11 +327,60 @@ def monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_r
         monster_rect.y = bottom_left_spawn_rect.y
 
 
+def draw_monster_helper():
+    global monster_helper_draw_time
+    global monster_helper_x_neg_or_pos_decision
+    global monster_helper_y_neg_or_pos_decision
+
+    monster_helper_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MONSTER_HELPER_WIDTH,MONSTER_HELPER_HEIGHT)
+    if monster_helper_draw_time == 0:
+        monster_helper_x_neg_or_pos_decision = random.choice([1,-1])
+        monster_helper_y_neg_or_pos_decision = random.choice([1,-1])
+        monster_helper_draw_time = 1
+
+    if monster_helper_x_neg_or_pos_decision > 0:
+        monster_helper_rect.x = monster_helper_rect.x + MONSTER_HELPER_MAX_RANGE
+    elif monster_helper_x_neg_or_pos_decision < 0:
+        monster_helper_rect.x = monster_helper_rect.x - MONSTER_HELPER_MAX_RANGE
+
+    if monster_helper_y_neg_or_pos_decision > 0:
+        monster_helper_rect.y = monster_helper_rect.y +MONSTER_HELPER_MAX_RANGE
+    elif monster_helper_y_neg_or_pos_decision < 0:
+        monster_helper_rect.y = monster_helper_rect.y - MONSTER_HELPER_MAX_RANGE
+
+    DISP.blit(MONSTER_HELPER,(monster_helper_rect.x,monster_helper_rect.y))
+
+    # monster_helper_function()
+
+def monster_helper_decision():
+    global monster_helper_decision_to_spawn
+    monster_helper_decision_to_spawn = random.randint(1,2)
+
+    if monster_helper_decision_to_spawn == 1:
+        return True
+    else:
+        return False
+
+# def monster_helper_function():
+#     if monster_helper_decision():
+#             draw_monster_helper()
+#     monster_helper_spawn_delay = threading.Timer(1, draw_monster_helper)
+#     monster_helper_spawn_delay.start()
+
+# monster_helper_function()
+# monster_helper_decision = monster_helper_decision()
+
 def main():
+    # global monster_helper_decision
+    global should_helper_monster_decision_continue
+    global has_monster_helper_spawned
+
     bottom_left_spawn_rect = pygame.Rect(MONSTER_BORDER_LEFT_X+MONSTER_WIDTH+200,MONSTER_BORDER_DOWN_Y-MONSTER_HEIGHT-200,100,100)
     top_right_spawn_rect = pygame.Rect(MONSTER_BORDER_RIGHT_X-MONSTER_WIDTH-200,MONSTER_BORDER_UP_Y+MONSTER_HEIGHT+200,100,100)
 
     mc_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MC_WIDTH,MC_HEIGHT)
+    # monster_helper_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MONSTER_HELPER_WIDTH,MONSTER_HELPER_HEIGHT)
+
     if monster_initial_decision_to_spawn == 'b-l':
         monster_rect = pygame.Rect(bottom_left_spawn_rect.x,bottom_left_spawn_rect.y,MONSTER_WIDTH,MONSTER_HEIGHT)
     if monster_initial_decision_to_spawn == 't-r':
@@ -330,16 +399,25 @@ def main():
         draw_mask_and_detection(monster_rect,mc_rect)
         game_border_and_draw_background(background_rect)
         move_characters(background_rect,monster_rect)
+
         if detected == True:
             chase(monster_rect,mc_rect)
-            pass
 
         monsters_border(monster_rect,background_rect)
         draw_monster(monster_rect,mc_rect)
         # draw_darkness(mc_rect)
+
+            
+
         draw_characters(mc_rect)
         monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_right_spawn_rect)
 
+
+        if monster_helper_decision() and should_helper_monster_decision_continue:
+            has_monster_helper_spawned = True
+            should_helper_monster_decision_continue = False
+        if has_monster_helper_spawned == True:
+            draw_monster_helper()
 
         # spawn point
         pygame.draw.rect(DISP,BLACK,bottom_left_spawn_rect)
@@ -353,5 +431,5 @@ def main():
 
 main()
 
-# if __name__ == '__python.py__':
-#     main()
+if __name__ == '__python.py__':
+    main()
