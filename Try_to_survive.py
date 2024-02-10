@@ -24,7 +24,7 @@ BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
-MONSTER_VEL = 1
+MONSTER_VEL = 12
 MONSTER_MAX_RANGE = 100
 MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
 MONSTER_BORDER_DOWN_Y = (-HEIGHT/2+BACKGROUND_HEIGHT/2)+WIDTH-MONSTER_HEIGHT
@@ -61,8 +61,9 @@ monster_initial_decision_to_spawn = random.choice(['t-r','b-l'])
 monster_in_game_decision_to_spawn = random.choice(['t-r','b-l'])
 monster_helper_draw_time = 0
 despawn_timer = 2
-mc_previous_rect_x = None
-mc_previous_rect_y = None
+mc_previous_rect_x = 0
+mc_previous_rect_y = 0
+mc_previous_position_getting_time = 0
 
 MONSTER_IMAGE = pygame.image.load('./First.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
@@ -89,30 +90,37 @@ def move_characters(background_rect,monster_rect):
     global MONSTER_BORDER_DOWN_Y
     global MONSTER_BORDER_LEFT_X
     global MONSTER_BORDER_RIGHT_X
+    global mc_previous_rect_x
+    global mc_previous_rect_y
+    
 
     # background movement
     keys = pygame.key.get_pressed()
     
     if keys[pygame.K_LEFT]:
         background_rect.x=background_rect.x+VEL
+        mc_previous_rect_x +=VEL
         if background_rect.x < 0+MC_WIDTH*2:
             MONSTER_BORDER_LEFT_X += VEL
             MONSTER_BORDER_RIGHT_X += VEL
             
     if keys[pygame.K_RIGHT]:
         background_rect.x=background_rect.x-VEL
+        mc_previous_rect_x -=VEL
         if background_rect.x > WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
             MONSTER_BORDER_RIGHT_X -= VEL
             MONSTER_BORDER_LEFT_X -= VEL
 
     if keys[pygame.K_UP]:
         background_rect.y=background_rect.y+VEL
+        mc_previous_rect_y +=VEL
         if background_rect.y < 0+MC_HEIGHT:
             MONSTER_BORDER_DOWN_Y += VEL
             MONSTER_BORDER_UP_Y += VEL
         # MONSTER_BORDER_UP_Y += VEL
     if keys[pygame.K_DOWN]:
         background_rect.y=background_rect.y-VEL
+        mc_previous_rect_y -=VEL
         if background_rect.y > HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
             MONSTER_BORDER_DOWN_Y -= VEL
             MONSTER_BORDER_UP_Y -= VEL
@@ -176,6 +184,7 @@ def draw_monster(monster_rect,mc_rect):
         detected = True
         # pass
     elif  monster_helper_detection and not detected:
+        # print('hhh')
         chase_when_monster_helper_detection(monster_rect,mc_rect)
     elif detected == False:
         roam(monster_rect)
@@ -410,18 +419,24 @@ def monster_helper_detection_func(monster_helper_rect_x,monster_helper_rect_y):
 def chase_when_monster_helper_detection(monster_rect,mc_rect):
     global mc_previous_rect_x
     global mc_previous_rect_y
+    global mc_previous_position_getting_time
 
-    mc_previous_rect_x = mc_rect.x
-    mc_previous_rect_y = mc_rect.y
+    if mc_previous_position_getting_time ==0:
+        mc_previous_rect_x = mc_rect.x
+        mc_previous_rect_y = mc_rect.y
+        mc_previous_position_getting_time = 1
 
-    if mc_previous_rect_x< mc_rect.x:
-        monster_rect.x += MONSTER_VEL
-    elif mc_previous_rect_x> mc_rect.x:
-        monster_rect.x-= MONSTER_VEL
 
-    if mc_previous_rect_y< mc_rect.y:
+    print(monster_rect.x,monster_rect.y)
+
+    if mc_previous_rect_x< monster_rect.x:
+        monster_rect.x -= MONSTER_VEL
+    elif mc_previous_rect_x>  monster_rect.x:
+        monster_rect.x+= MONSTER_VEL
+
+    if mc_previous_rect_y>  monster_rect.y:
         monster_rect.y += MONSTER_VEL
-    elif mc_previous_rect_y> mc_rect.y:
+    elif mc_previous_rect_y<  monster_rect.y:
         monster_rect.y-= MONSTER_VEL
 
     monster_chase_rotation_when_helped_by_monster(monster_rect,mc_previous_rect_x,mc_previous_rect_y)
