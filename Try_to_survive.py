@@ -42,6 +42,11 @@ DARKNESS_IMAGE = pygame.image.load('./Darkness.png').convert_alpha()
 DARKNESS = pygame.transform.scale(DARKNESS_IMAGE,(DARKNESS_WIDTH,DARKNESS_HEIGHT))
 MONSTER_HELPER_MAX_RANGE = 250
 
+# sounds
+HEART_BEAT_SOUND = pygame.mixer.Sound('./heart-beat.mp3')
+WHISTLE_SOUND_1 = pygame.mixer.Sound('./whistle-one.mp3')
+WHISTLE_SOUND_2 = pygame.mixer.Sound('./whistle-two.mp3')
+
 monster_helper_detection = False
 should_helper_monster_decision_continue = True
 monster_helper_spawned = False
@@ -432,9 +437,10 @@ def chase_when_monster_helper_detection(monster_rect,mc_rect):
     global monster_helper_detection
 
     if mc_previous_position_getting_time ==0:
-        print('youo')
+        # print('youo')
         mc_previous_rect_x = mc_rect.x
         mc_previous_rect_y = mc_rect.y
+        play_whistle_sound()
         mc_previous_position_getting_time = 1
 
 
@@ -461,6 +467,19 @@ def monster_chase_rotation_when_helped_by_monster(monster_rect,mc_previous_rect_
     monster_rotate = pygame.transform.rotate(MONSTER,monster_rotation)
     monster_center_rect = monster_rotate.get_rect(center = (monster_rect.x+MONSTER_WIDTH/2,monster_rect.y+MONSTER_HEIGHT/2))
     DISP.blit(monster_rotate,monster_center_rect)
+
+def play_heart_beat_sound(monster_rect):
+    if monster_rect.x >0 and monster_rect.x<WIDTH and monster_rect.y > 0 and monster_rect.y<HEIGHT:
+        HEART_BEAT_SOUND.play()
+    else:
+        HEART_BEAT_SOUND.stop()
+
+def play_whistle_sound():
+    helper_monster_decision = random.choice([1,2])
+    if helper_monster_decision == 1:
+        WHISTLE_SOUND_1.play()
+    if helper_monster_decision == 2:
+        WHISTLE_SOUND_2.play()
 
 def main():
     # global monster_helper_decision
@@ -497,13 +516,13 @@ def main():
 
         monsters_border(monster_rect,background_rect)
         draw_monster(monster_rect,mc_rect)
-        draw_darkness(mc_rect)
+        # draw_darkness(mc_rect)
 
             
 
         draw_characters(mc_rect)
 
-        if monster_helper_decision == False:
+        if monster_helper_decision == False and detected == False:
             monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_right_spawn_rect)
 
 
@@ -516,7 +535,8 @@ def main():
 
         if has_monster_helper_spawned == True:
             draw_monster_helper()
-
+        
+        play_heart_beat_sound(monster_rect)
         # spawn point
         pygame.draw.rect(DISP,BLACK,bottom_left_spawn_rect)
         pygame.draw.rect(DISP,BLACK,top_right_spawn_rect)
