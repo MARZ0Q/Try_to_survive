@@ -9,7 +9,7 @@ To run the game on your system execute this commmand on your shell:
 ```bash
 pip install pygame
 ```
-or
+Or
 ```bash
 python<your python version> -m pip install pygame
 ```
