@@ -1,5 +1,3 @@
-# Try_to_survive
-
 ===========
 pygame-menu
 ===========
