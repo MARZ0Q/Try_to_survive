@@ -52,6 +52,8 @@ should_helper_monster_decision_continue = True
 monster_helper_spawned = False
 monster_decision_x_neg_or_pos = random.choice([1,-1])
 monster_decision_y_neg_or_pos = random.choice([1,-1])
+monster_helper_mid_pos_decision = random.choice([True,False])
+
 monster_decision_range = random.randint(1,MONSTER_MAX_RANGE)
 monster_previous_position_x = 0
 monster_previous_position_y = 0
@@ -356,10 +358,11 @@ def monster_mid_game_decision_to_spawn(monster_rect,bottom_left_spawn_rect,top_r
     # pass
 
 
-def draw_monster_helper():
+def draw_monster_helper(mc_rect):
     global monster_helper_draw_time
     global monster_helper_x_neg_or_pos_decision
     global monster_helper_y_neg_or_pos_decision
+    global monster_helper_mid_pos_decision
 
     monster_helper_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MONSTER_HELPER_WIDTH,MONSTER_HELPER_HEIGHT)
 
@@ -367,6 +370,7 @@ def draw_monster_helper():
     if monster_helper_draw_time == 0:
         monster_helper_x_neg_or_pos_decision = random.choice([1,-1])
         monster_helper_y_neg_or_pos_decision = random.choice([1,-1])
+        monster_helper_mid_pos_decision = random.choice([True,False])
         monster_helper_draw_time = 1
 
     if monster_helper_x_neg_or_pos_decision > 0:
@@ -378,6 +382,24 @@ def draw_monster_helper():
         monster_helper_rect.y = monster_helper_rect.y +MONSTER_HELPER_MAX_RANGE
     elif monster_helper_y_neg_or_pos_decision < 0:
         monster_helper_rect.y = monster_helper_rect.y - MONSTER_HELPER_MAX_RANGE
+
+
+
+    if monster_helper_mid_pos_decision and monster_helper_x_neg_or_pos_decision > 0 and monster_helper_y_neg_or_pos_decision :
+        monster_helper_rect.x = mc_rect.x + MONSTER_HELPER_MAX_RANGE
+        monster_helper_rect.y = mc_rect.y
+
+    if monster_helper_mid_pos_decision and monster_helper_x_neg_or_pos_decision < 0 and monster_helper_y_neg_or_pos_decision > 0:
+        monster_helper_rect.x = mc_rect.x - MONSTER_HELPER_MAX_RANGE
+        monster_helper_rect.y = mc_rect.y
+
+    if monster_helper_mid_pos_decision and monster_helper_x_neg_or_pos_decision < 0 and monster_helper_y_neg_or_pos_decision < 0:
+        monster_helper_rect.y = mc_rect.y - MONSTER_HELPER_MAX_RANGE
+        monster_helper_rect.x = mc_rect.x
+
+    if monster_helper_mid_pos_decision and monster_helper_x_neg_or_pos_decision > 0 and monster_helper_y_neg_or_pos_decision > 0:
+        monster_helper_rect.y = mc_rect.y + MONSTER_HELPER_MAX_RANGE
+        monster_helper_rect.x = mc_rect.x
 
     DISP.blit(MONSTER_HELPER,(monster_helper_rect.x,monster_helper_rect.y))
     monster_helper_detection_func(monster_helper_rect.x,monster_helper_rect.y)
@@ -534,7 +556,7 @@ def main():
             monster_helper_spawn_delay.start()
 
         if has_monster_helper_spawned == True:
-            draw_monster_helper()
+            draw_monster_helper(mc_rect)
         
         play_heart_beat_sound(monster_rect)
         # spawn point
@@ -549,5 +571,5 @@ def main():
 
 main()
 
-if __name__ == '__python.py__':
-    main()
+# if __name__ == '__python.py__':
+#     main()
