@@ -51,6 +51,8 @@ The flesh looks like this:
 
 <b>4</b>. <b>MOST IMPORTANTLY when the monster is in your vision range there will be an alert sound. If you hear the sound don't look around!</b>
 
+<b>5</b>. Use arrow keys to move around. And enjoy the game!!
+
 
 
 
