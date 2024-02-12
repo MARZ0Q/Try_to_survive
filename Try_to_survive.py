@@ -1,9 +1,13 @@
-
 import pygame
 import math 
 import random
 import threading
+import sys
+import tkinter as tk
 
+window  = tk.Tk()
+
+ABSOLUTE_PATH = 'Try_to_survive'
 HEIGHT = 700
 WIDTH = 700
 
@@ -11,19 +15,27 @@ pygame.display.set_caption('Try to survive')
 DISP = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.init()
 
+number_of_collected_flesh = 0
+
+RED  = (255,0,0)
+BLACK = (0,0,0)
 
 FPS = 30
-VEL = 7
+VEL = 13
 WHITE = (255,255,255)
 MC_WIDTH = WIDTH/6
 MC_HEIGHT = WIDTH/6
-BLACK = (0,0,0)
+
+FLESH_WIDTH = WIDTH/6
+FLESH_HEIGHT = HEIGHT/6
+
 DARKNESS_WIDTH = WIDTH*1.5
 DARKNESS_HEIGHT = WIDTH*1.5
 BACKGROUND_WIDTH = WIDTH*6
 BACKGROUND_HEIGHT = WIDTH*6
 MONSTER_WIDTH = WIDTH/6
 MONSTER_HEIGHT = HEIGHT/6
+FONT = pygame.font.Font('freesansbold.ttf', 32)
 MONSTER_VEL = 13
 MONSTER_MAX_RANGE = 100
 MONSTER_BORDER_UP_Y = (HEIGHT/2-BACKGROUND_HEIGHT/2)+MONSTER_HEIGHT
@@ -37,7 +49,6 @@ MONSTER_HELPER = pygame.transform.scale(MONSTER_HELPER_IMAGE,(MONSTER_HELPER_WID
 BACKGROUND_IMAGE = pygame.image.load('./Background.png')
 BACKGROUND = pygame.transform.scale(BACKGROUND_IMAGE,(BACKGROUND_WIDTH,BACKGROUND_HEIGHT))
 MC_IMAGE = pygame.image.load('./First_1.png')
-MC_IMAGE_2 = pygame.image.load('./First_2.png')
 MC = pygame.transform.scale(MC_IMAGE,(MC_WIDTH,MC_HEIGHT)).convert_alpha()
 DARKNESS_IMAGE = pygame.image.load('./Darkness.png').convert_alpha()
 DARKNESS = pygame.transform.scale(DARKNESS_IMAGE,(DARKNESS_WIDTH,DARKNESS_HEIGHT))
@@ -73,10 +84,16 @@ mc_previous_rect_x = 0
 mc_previous_rect_y = 0
 mc_previous_position_getting_time = 0
 
-MONSTER_IMAGE = pygame.image.load('./First_1.png')
+MONSTER_IMAGE = pygame.image.load('./Monster.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
 
+FLESH_IMAGE = pygame.image.load('./Monster.png')
+FLESH = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT))
+
+
 monster_helper_decision_to_spawn = random.randint(1,3)
+
+flesh_initial_spawn_funcion_times = 0
 
 def draw_window():
     DISP.fill(WHITE)
@@ -91,7 +108,7 @@ def draw_characters(mc_rect):
     DISP.blit(mc_rotate,(mc_center_rect))
 
 
-def move_characters(background_rect,monster_rect):
+def move_characters(background_rect,monster_rect,flesh1_rect):
     global monster_previous_position_x
     global monster_previous_position_y
     global MONSTER_BORDER_UP_Y
@@ -107,6 +124,8 @@ def move_characters(background_rect,monster_rect):
     
     if keys[pygame.K_LEFT]:
         background_rect.x=background_rect.x+VEL
+        if background_rect.x < 0+MC_WIDTH*2:
+            flesh1_rect.x +=VEL
         mc_previous_rect_x +=VEL
         if background_rect.x < 0+MC_WIDTH*2:
             MONSTER_BORDER_LEFT_X += VEL
@@ -114,6 +133,8 @@ def move_characters(background_rect,monster_rect):
             
     if keys[pygame.K_RIGHT]:
         background_rect.x=background_rect.x-VEL
+        if background_rect.x > WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
+            flesh1_rect.x -=VEL
         mc_previous_rect_x -=VEL
         if background_rect.x > WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
             MONSTER_BORDER_RIGHT_X -= VEL
@@ -121,6 +142,8 @@ def move_characters(background_rect,monster_rect):
 
     if keys[pygame.K_UP]:
         background_rect.y=background_rect.y+VEL
+        if  background_rect.y < 0+MC_HEIGHT:
+            flesh1_rect.y += VEL
         mc_previous_rect_y +=VEL
         if background_rect.y < 0+MC_HEIGHT:
             MONSTER_BORDER_DOWN_Y += VEL
@@ -128,11 +151,14 @@ def move_characters(background_rect,monster_rect):
         # MONSTER_BORDER_UP_Y += VEL
     if keys[pygame.K_DOWN]:
         background_rect.y=background_rect.y-VEL
+        if background_rect.y > HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
+            flesh1_rect.y -= VEL
         mc_previous_rect_y -=VEL
         if background_rect.y > HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
             MONSTER_BORDER_DOWN_Y -= VEL
             MONSTER_BORDER_UP_Y -= VEL
-    
+
+
     # monster movement
     if keys[pygame.K_LEFT]:
         if background_rect.x < 0+MC_WIDTH*2:
@@ -153,7 +179,7 @@ def move_characters(background_rect,monster_rect):
 
 
 
-def game_border_and_draw_background(background_rect):
+def game_border_and_draw_background(background_rect,flesh1_rect):
     DISP.blit(BACKGROUND,(background_rect.x,background_rect.y))
 
     if background_rect.y < HEIGHT/2-BACKGROUND_HEIGHT+MC_HEIGHT:
@@ -161,6 +187,7 @@ def game_border_and_draw_background(background_rect):
 
     if background_rect.y > 0+MC_HEIGHT:
         background_rect.y = 0+MC_HEIGHT
+        flesh1_rect.y = 0+MC_HEIGHT
 
     if background_rect.x < WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH:
         background_rect.x = WIDTH/2-BACKGROUND_WIDTH+MC_WIDTH
@@ -480,6 +507,30 @@ def play_whistle_sound():
     if helper_monster_decision == 2:
         WHISTLE_SOUND_2.play()
 
+def collected_flesh_checker(mc_rect,flesh1_rect):
+    global number_of_collected_flesh
+
+    if  pygame.Rect.colliderect(mc_rect, flesh1_rect):
+        number_of_collected_flesh = 1
+
+    text = FONT.render(f'{number_of_collected_flesh}/1', True, RED)
+    textRect = text.get_rect()
+    textRect.center = (32,32)
+    DISP.blit(text, textRect)
+
+def flesh_initial_spawn(flesh1_rect,bottom_left_spawn_rect,top_right_spawn_rect):
+    global flesh_initial_spawn_funcion_times
+
+    if monster_initial_decision_to_spawn == 'b-l':
+        flesh1_rect.x = bottom_left_spawn_rect.x
+        flesh1_rect.y = bottom_left_spawn_rect.y
+
+    if monster_initial_decision_to_spawn == 't-r':
+        flesh1_rect.x = top_right_spawn_rect.x
+        flesh1_rect.y = top_right_spawn_rect.y
+
+    flesh_initial_spawn_funcion_times = 1
+
 def main():
     
     global should_helper_monster_decision_continue
@@ -488,6 +539,8 @@ def main():
     bottom_left_spawn_rect = pygame.Rect(MONSTER_BORDER_LEFT_X+MONSTER_WIDTH+200,MONSTER_BORDER_DOWN_Y-MONSTER_HEIGHT-200,100,100)
     top_right_spawn_rect = pygame.Rect(MONSTER_BORDER_RIGHT_X-MONSTER_WIDTH-200,MONSTER_BORDER_UP_Y+MONSTER_HEIGHT+200,100,100)
     mc_rect = pygame.Rect(WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),MC_WIDTH,MC_HEIGHT)
+
+    flesh1_rect = pygame.Rect((WIDTH/2-(WIDTH/6/2),HEIGHT/2-(HEIGHT/4/2),FLESH_WIDTH,FLESH_HEIGHT))
 
     if monster_initial_decision_to_spawn == 'b-l':
         monster_rect = pygame.Rect(bottom_left_spawn_rect.x,bottom_left_spawn_rect.y,MONSTER_WIDTH,MONSTER_HEIGHT)
@@ -501,13 +554,13 @@ def main():
     while run:
         clock.tick(FPS)
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or monster_mc_collision:
+            if event.type == pygame.QUIT or monster_mc_collision or number_of_collected_flesh == 1:
                 run = False
 
         draw_window()
         draw_mask_and_detection(monster_rect,mc_rect)
-        game_border_and_draw_background(background_rect)
-        move_characters(background_rect,monster_rect)
+        game_border_and_draw_background(background_rect,flesh1_rect)
+        move_characters(background_rect,monster_rect,flesh1_rect)
 
         if detected == True:
             chase(monster_rect,mc_rect)
@@ -529,8 +582,10 @@ def main():
         if has_monster_helper_spawned == True:
             draw_monster_helper(mc_rect)
             
-        draw_darkness(mc_rect)
+        # draw_darkness(mc_rect)
 
+        if flesh_initial_spawn_funcion_times ==0:
+            flesh_initial_spawn(flesh1_rect,bottom_left_spawn_rect,top_right_spawn_rect)
 
         draw_characters(mc_rect)
         
@@ -540,9 +595,10 @@ def main():
         pygame.draw.rect(DISP,BLACK,bottom_left_spawn_rect)
         pygame.draw.rect(DISP,BLACK,top_right_spawn_rect)
 
-        
+        collected_flesh_checker(mc_rect,flesh1_rect)
+        DISP.blit(FLESH,(flesh1_rect.x,flesh1_rect.y))
         pygame.display.update()
-
+        print(flesh1_rect.x,flesh1_rect.y)
     pygame.quit()
 
 
@@ -553,5 +609,16 @@ def bad_ending():  # goood for me ^_^
 
 main()
 
-# if __name__ == '__python.py__':
-#     main()
+def have_you_won():
+    congrats_window = tk.Label(text="You won! and I don't care!")
+    button = tk.Button(window, text='Ok', width=25, command=window.destroy)
+    congrats_window.pack()
+    button.pack()
+    window.mainloop()
+
+if number_of_collected_flesh == 1:
+    have_you_won()
+
+
+if __name__ == '__Try_to_survive.py__':
+    main()
