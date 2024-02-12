@@ -607,7 +607,6 @@ def main():
         collected_flesh_checker(mc_rect,flesh1_rect)
         DISP.blit(FLESH,(flesh1_rect.x,flesh1_rect.y))
 
-        print(monster_rect.x,monster_rect.y)
         if monster_mc_collision:
             bad_ending()
         pygame.display.update()
