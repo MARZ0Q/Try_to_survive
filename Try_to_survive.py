@@ -2,18 +2,16 @@ import pygame
 import math 
 import random
 import threading
-import sys
 import tkinter as tk
 
 pygame.init()
 
 window  = tk.Tk()
 
-ABSOLUTE_PATH = 'Try_to_survive'
 HEIGHT = 700
 WIDTH = 700
 
-BAD_ENDING_PIC = pygame.image.load('./bad_ending.png') 
+BAD_ENDING_PIC = pygame.image.load('./assets/pics/bad_ending.png') 
 BAD_ENDING_SCALED_PIC = pygame.transform.scale(BAD_ENDING_PIC,(WIDTH,HEIGHT))
 pygame.display.set_caption('Try to survive')
 DISP = pygame.display.set_mode((WIDTH,HEIGHT))
@@ -24,7 +22,7 @@ RED  = (255,0,0)
 BLACK = (0,0,0)
 
 FPS = 30
-VEL = 13
+VEL = 6
 WHITE = (255,255,255)
 MC_WIDTH = WIDTH/6
 MC_HEIGHT = WIDTH/6
@@ -47,22 +45,22 @@ MONSTER_BORDER_LEFT_X = (WIDTH/2-BACKGROUND_WIDTH/2)+MONSTER_WIDTH/2
 MONSTER_BORDER_RIGHT_X = (-WIDTH/2+BACKGROUND_WIDTH/2)+WIDTH-MONSTER_WIDTH
 MONSTER_HELPER_WIDTH = WIDTH/6
 MONSTER_HELPER_HEIGHT = HEIGHT/6
-MONSTER_HELPER_IMAGE = pygame.image.load('./funny_looking_ghost.png')
+MONSTER_HELPER_IMAGE = pygame.image.load('./assets/pics/funny_looking_ghost.png')
 MONSTER_HELPER = pygame.transform.scale(MONSTER_HELPER_IMAGE,(MONSTER_HELPER_WIDTH,MONSTER_HEIGHT))
-BACKGROUND_IMAGE = pygame.image.load('./Background.png')
+BACKGROUND_IMAGE = pygame.image.load('./assets/pics/Background.png')
 BACKGROUND = pygame.transform.scale(BACKGROUND_IMAGE,(BACKGROUND_WIDTH,BACKGROUND_HEIGHT))
-MC_IMAGE = pygame.image.load('./First_1.png')
+MC_IMAGE = pygame.image.load('./assets/pics/MC.png')
 MC = pygame.transform.scale(MC_IMAGE,(MC_WIDTH,MC_HEIGHT)).convert_alpha()
-DARKNESS_IMAGE = pygame.image.load('./Darkness.png').convert_alpha()
+DARKNESS_IMAGE = pygame.image.load('./assets/pics/Darkness.png').convert_alpha()
 DARKNESS = pygame.transform.scale(DARKNESS_IMAGE,(DARKNESS_WIDTH,DARKNESS_HEIGHT))
 MONSTER_HELPER_MAX_RANGE = 250
 
 pygame.mixer.init()
 
 # sounds
-HEART_BEAT_SOUND = pygame.mixer.Sound('./heart-beat.mp3')
-WHISTLE_SOUND_1 = pygame.mixer.Sound('./whistle-one.mp3')
-WHISTLE_SOUND_2 = pygame.mixer.Sound('./whistle-two.mp3')
+HEART_BEAT_SOUND = pygame.mixer.Sound('./assets/audios/heart-beat.mp3')
+WHISTLE_SOUND_1 = pygame.mixer.Sound('./assets/audios/whistle-one.mp3')
+WHISTLE_SOUND_2 = pygame.mixer.Sound('./assets/audios/whistle-two.mp3')
 
 monster_helper_detection = False
 should_helper_monster_decision_continue = True
@@ -91,12 +89,12 @@ mc_previous_position_getting_time = 0
 
 monster_relief_musice_play_times = 0
 
-MONSTER_IMAGE = pygame.image.load('./Monster.png')
+MONSTER_IMAGE = pygame.image.load('./assets/pics/Monster.png')
 MONSTER = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT)).convert_alpha()
-monster_relief = pygame.mixer.Sound('./monster_relief.mp3')
+monster_relief = pygame.mixer.Sound('./assets/audios/monster_relief.mp3')
 
-FLESH_IMAGE = pygame.image.load('./Monster.png')
-FLESH = pygame.transform.scale(MONSTER_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT))
+FLESH_IMAGE = pygame.image.load('./assets/pics/Meat.png')
+FLESH = pygame.transform.scale(FLESH_IMAGE,(MONSTER_WIDTH,MONSTER_HEIGHT))
 
 
 monster_helper_decision_to_spawn = random.randint(1,3)
@@ -448,7 +446,7 @@ def spawn_monster_helper():
 def despawn_monster_helper():
     global has_monster_helper_spawned
     has_monster_helper_spawned = False
-    monster_helper_spawn_delay = random.randint(1,10)
+    monster_helper_spawn_delay = random.randint(1,2)
     monster_helper_delay= threading.Timer(monster_helper_spawn_delay, spawn_monster_helper)
     monster_helper_delay.start()
 
@@ -592,10 +590,11 @@ def main():
         if has_monster_helper_spawned == True and not monster_mc_collision:
             draw_monster_helper(mc_rect)
             
-        # draw_darkness(mc_rect)
 
         if flesh_initial_spawn_funcion_times ==0:
             flesh_initial_spawn(flesh1_rect,bottom_left_spawn_rect,top_right_spawn_rect)
+
+        draw_darkness(mc_rect)
 
         draw_characters(mc_rect)
         
@@ -607,17 +606,23 @@ def main():
 
         collected_flesh_checker(mc_rect,flesh1_rect)
         DISP.blit(FLESH,(flesh1_rect.x,flesh1_rect.y))
+
+        print(monster_rect.x,monster_rect.y)
         if monster_mc_collision:
             bad_ending()
         pygame.display.update()
     pygame.quit()
+
+def bad_ending_music_player():
+    monster_relief.play()
 
 
 def bad_ending():  # goood for me ^_^
     global monster_relief_musice_play_times
     BAD_ENDING_PIC_RECT = BAD_ENDING_SCALED_PIC.get_rect()
     if monster_relief_musice_play_times == 0:
-        monster_relief.play(loops=1)
+        bad_ending_music_play_delay = threading.Timer(1, bad_ending_music_player)
+        bad_ending_music_play_delay.start()
         monster_relief_musice_play_times = 1
     BAD_ENDING_PIC_RECT.center = (WIDTH/2,HEIGHT/2)
     DISP.blit(BAD_ENDING_SCALED_PIC,BAD_ENDING_PIC_RECT)
@@ -634,5 +639,5 @@ def have_you_won():
 if number_of_collected_flesh == 1 and not monster_mc_collision:
     have_you_won()
 
-if __name__ == '__Try_to_survive.py__':
+if __name__ == 'Try_to_survive.py':
     main()
