@@ -1,0 +1,9 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Vs-code's leftover
+.vscode/
+
+# My test files
+new.py
+test.py
